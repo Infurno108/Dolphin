@@ -3,40 +3,27 @@ import threading
 import rsa
 
 # key production
-public_key, private_key = rsa.newkeys(1024)
+# public_key, private_key = rsa.newkeys(1024)
 public_partner = None
 
-choice = input("Enter 1 for server and 2 for client: ")
+with open('public.bin', 'rb') as f:
+    public_key = rsa.PublicKey.load_pkcs1(f.read(1024))
+with open('private.bin', 'rb') as f:
+    private_key = rsa.PrivateKey.load_pkcs1(f.read(1024))
 
-if choice == '1':
-    ip = input("Please enter your ip address: ")
-    # Socket() -> creates a new socket, AF_INET saying ipv4, and sock_stream saying tcp
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# destination = input("Who would you like to talk to?: ")
+# user = input("What is your name?: ")
+ip = input("TEMPORARY: Please enter the servers ip address: ")
 
-    # Bind() -> binds the socket to adress and port number
-    server.bind((ip, 9999))
-
-    server.listen()  # Listen() -> listens for incoming connections
-
-    # accpet() recieves connections, and returns touple: (socket, address of new connection)
-    client, _ = server.accept()
-    print(_)
-
-    # sending public key to client first
-    client.send(public_key.save_pkcs1("PEM"))
-    public_partner = rsa.PublicKey.load_pkcs1(
-        client.recv(1024))  # recieving public key from client
-
-elif choice == '2':
-    ip = input("Please enter the server's ip address: ")
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # currently just looping internally on my own machine for testing, this will need to be changed
-    client.connect((ip, 9999))
-    public_partner = rsa.PublicKey.load_pkcs1(
-        client.recv(1024))  # receive first, send second
-    client.send(public_key.save_pkcs1("PEM"))
-else:
-    exit()
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.connect((ip, 9999))
+# print("Connected to server")
+public_partner = rsa.PublicKey.load_pkcs1(
+    client.recv(1024))  # Apon connecting the server will try and send over public key
+# print("revieced key from server")
+# The server wants a response with the public key
+client.send(public_key.save_pkcs1("PEM"))
+# print("sent key to server")
 
 
 def send(c):
